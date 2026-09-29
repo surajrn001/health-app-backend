@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: health_app_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - SECRET_KEY=super-secret-production-key-change-in-env
+      - DATABASE_URL=sqlite:///./health_app.db
+      - RATE_LIMIT_DEFAULT=100/minute
+      - RATE_LIMIT_AUTH=20/minute
+    volumes:
+      - .:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional PostgreSQL service (uncomment to use Postgres instead of SQLite)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: health_app_postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: health_user
+  #     POSTGRES_PASSWORD: health_password
+  #     POSTGRES_DB: health_db
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+
+# volumes:
+#   pgdata:
