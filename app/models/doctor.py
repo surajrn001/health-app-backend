@@ -33,6 +33,12 @@ class Doctor(Base, AuditableMixin):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    billings = relationship(
+        "Billing",
+        back_populates="doctor",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     __table_args__ = (
         UniqueConstraint("email", name="uq_doctor_email"),

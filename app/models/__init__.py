@@ -5,6 +5,7 @@ from app.models.doctor import Doctor
 from app.models.patient import Patient
 from app.models.doctor_patient import DoctorPatient
 from app.models.appointment import Appointment, AppointmentStatus
+from app.models.billing import Billing, PaymentStatus, PaymentMode
 
 __all__ = [
     "Base",
@@ -16,4 +17,8 @@ __all__ = [
     "DoctorPatient",
     "Appointment",
     "AppointmentStatus",
+    "Billing",
+    "PaymentStatus",
+    "PaymentMode",
 ]
+

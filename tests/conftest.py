@@ -11,7 +11,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.database import Base, get_db
-from app.models import User, UserRole, Doctor, Patient, DoctorPatient, Appointment, AppointmentStatus
+from app.models import User, UserRole, Doctor, Patient, DoctorPatient, Appointment, AppointmentStatus, Billing, PaymentStatus, PaymentMode
 from app.auth.jwt import hash_password, create_access_token
 from sqlalchemy import event
 from sqlalchemy.engine import Engine

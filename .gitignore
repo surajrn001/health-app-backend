@@ -54,5 +54,8 @@ Thumbs.db
 *.tar.gz
 
 # Screenshots & Local Test Captures
-Screenshot*.png
+/Screenshot*.png
+!screenshots/
+!screenshots/*
+
 

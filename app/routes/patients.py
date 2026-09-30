@@ -16,9 +16,11 @@ from app.schemas.patient import (
     PatientResponse,
     PatientDetailResponse,
 )
+from app.models.billing import PaymentStatus
 from app.schemas.appointment import AppointmentResponse
+from app.schemas.billing import BillingResponse
 from app.schemas.common import PaginatedResponse, make_paginated_response
-from app.services import PatientService, DoctorService, AssignmentService, AppointmentService
+from app.services import PatientService, DoctorService, AssignmentService, AppointmentService, BillingService
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -296,3 +298,55 @@ def fetch_patient_appointments(
         appointment_date=appointment_date,
     )
     return make_paginated_response(items=appointments, total=total, page=page, limit=actual_limit)
+
+
+@router.get("/{patient_id}/billings", response_model=PaginatedResponse[BillingResponse])
+@limiter.limit(settings.RATE_LIMIT_DEFAULT)
+def fetch_patient_billings(
+    request: Request,
+    patient_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    page_size: Optional[int] = Query(None, ge=1, le=100, description="Alias for limit"),
+    payment_status: Optional[PaymentStatus] = Query(None, description="Filter by payment status"),
+    is_active: Optional[bool] = Query(True, description="Filter by active status"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve billing records for a specific patient (Level 27 & 28).
+    - Admin: Can view any patient's billings.
+    - Doctor: Can only view billings for their assigned patients.
+    """
+    patient = PatientService.get_patient(db, patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with id {patient_id} not found",
+        )
+
+    if current_user.role == UserRole.DOCTOR:
+        doctor = get_doctor_profile(current_user, db)
+        if not doctor or not AssignmentService.is_patient_assigned_to_doctor(db, doctor.id, patient_id):
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail="Doctors can only view billings for their assigned patients",
+            )
+    elif current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Access denied to patient billings",
+        )
+
+    actual_limit = page_size if page_size is not None else limit
+    skip = (page - 1) * actual_limit
+    billings, total = BillingService.get_billings(
+        db,
+        skip=skip,
+        limit=actual_limit,
+        patient_id=patient_id,
+        payment_status=payment_status,
+        is_active=is_active,
+    )
+    return make_paginated_response(items=billings, total=total, page=page, limit=actual_limit)
+

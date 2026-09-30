@@ -11,7 +11,7 @@ An enterprise-grade, production-ready healthcare management backend built with *
 - **ORM & Database:** SQLAlchemy 2.0 & SQLite / PostgreSQL
 - **Security & Auth:** PyJWT, Passlib with Bcrypt
 - **Rate Limiting:** SlowAPI
-- **Testing:** Pytest (58 passing tests with 89% code coverage)
+- **Testing:** Pytest (73 passing tests with complete coverage)
 - **ASGI Server:** Uvicorn
 - **Containerization:** Docker & Docker Compose
 
@@ -143,6 +143,44 @@ Health_app/
 - Pydantic V2 `json_schema_extra` request and response examples for all schemas.
 - Interactive Swagger UI (`/docs`) and ReDoc (`/redoc`).
 
+### Level 27: Billing Module
+- **Billing Entity**: `billings` (`id`, `patient_id`, `doctor_id`, `appointment_id`, `consultation_fee`, `additional_charges`, `total_amount`, `payment_status`, `payment_mode`, `is_active`, `created_at`, `updated_at`, `created_by`, `updated_by`).
+- **Enums**: `payment_status` (`pending`, `paid`, `cancelled`), `payment_mode` (`cash`, `card`, `upi`).
+- **Business Rules & Validation**:
+  - Validates that Patient and Doctor exist in database (HTTP 404).
+  - Doctor and Patient must be active (HTTP 400).
+  - Appointment (if provided) must belong to the specified Doctor and Patient.
+  - Automatic calculation of `total_amount = consultation_fee + additional_charges`.
+  - Rejection of billing for cancelled appointments (HTTP 400).
+  - Prevention of duplicate billing for the same appointment (HTTP 400).
+- **APIs**:
+  - `POST /billings` – Create billing record (admin or doctor for own patients)
+  - `GET /billings/{billing_id}` – Get billing details
+  - `GET /patients/{patient_id}/billings` – Billings for specific patient
+  - `GET /doctors/{doctor_id}/billings` – Billings for specific doctor
+  - `PUT /billings/{billing_id}` – Full update with recalculation
+  - `PATCH /billings/{billing_id}` – Partial update with recalculation
+  - `DELETE /billings/{billing_id}` – Soft delete (`is_active = False`)
+- **Authorization (RBAC)**:
+  - Admin: Full access across all billing endpoints.
+  - Doctor: Can view and create billings related to their assigned patients.
+  - Doctor: Strictly prohibited from deleting billing records (HTTP 403 Forbidden).
+
+### Level 28: Billing Reports & Filtering
+- **Filtering**: By `payment_status`, `doctor_id`, `patient_id`, and date ranges (`from` and `to` aliases).
+- **Pagination**: Uniform pagination (`page`, `limit`, `page_size`, `total_records`, `meta`, `data`) on all list APIs.
+- **Reporting Engine**:
+  - Calculates aggregate total revenue and total paid records.
+  - Calculates revenue breakdown per doctor (`revenue_by_doctor`).
+  - Calculates daily revenue breakdown (`revenue_by_day`).
+  - Endpoint: `GET /reports/revenue?doctor_id=1&from=2024-01-01&to=2024-01-31` (also accessible under `/api/v1/reports/revenue`).
+  - Strict RBAC: Doctors are restricted to querying their own revenue metrics.
+
+### Level 29: Transactions & Consistency
+- **Atomic Transactions**: Creating billing associated with a scheduled appointment atomically transitions the appointment status to `completed` in the same database transaction.
+- **Graceful Rollback**: All DB operations are wrapped in transaction blocks; any failure cleanly rolls back state without partial writes.
+- **Database-Level Constraints**: Added `CheckConstraint` for non-negative `consultation_fee >= 0`, `additional_charges >= 0`, and `total_amount >= 0`, alongside foreign key cascades and composite indexes.
+
 ---
 
 ## Setup & Running Instructions
@@ -185,7 +223,7 @@ Run the test suite with pytest and code coverage:
 pytest -v --cov=app --cov-report=term-missing
 ```
 
-Expected result: **58 passed in ~32s** with **89% coverage**.
+Expected result: **73 passed in ~60s** with complete coverage.
 
 ---
 

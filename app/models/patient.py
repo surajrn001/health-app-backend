@@ -27,6 +27,12 @@ class Patient(Base, AuditableMixin):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    billings = relationship(
+        "Billing",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
     __table_args__ = (
         Index("ix_patient_doc_active", "doctor_id", "is_active"),

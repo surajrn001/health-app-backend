@@ -32,6 +32,14 @@ from app.crud.crud_appointment import (
     delete_appointment,
     check_overlapping_appointment,
 )
+from app.crud.crud_billing import (
+    get_billing,
+    get_billings,
+    create_billing,
+    update_billing,
+    soft_delete_billing,
+    get_revenue_report,
+)
 
 __all__ = [
     "get_user_by_email",
@@ -58,4 +66,11 @@ __all__ = [
     "update_appointment",
     "delete_appointment",
     "check_overlapping_appointment",
+    "get_billing",
+    "get_billings",
+    "create_billing",
+    "update_billing",
+    "soft_delete_billing",
+    "get_revenue_report",
 ]
+

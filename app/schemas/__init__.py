@@ -28,6 +28,18 @@ from app.schemas.appointment import (
     AppointmentResponse,
     AppointmentStatus,
 )
+from app.schemas.billing import (
+    BillingBase,
+    BillingCreate,
+    BillingUpdate,
+    BillingPatch,
+    BillingResponse,
+    PaymentStatus,
+    PaymentMode,
+    RevenueReportResponse,
+    DoctorRevenueItem,
+    DailyRevenueItem,
+)
 from app.schemas.assignment import DoctorPatientAssignmentResponse
 from app.schemas.common import (
     MessageResponse,
@@ -69,6 +81,16 @@ __all__ = [
     "AppointmentUpdate",
     "AppointmentResponse",
     "AppointmentStatus",
+    "BillingBase",
+    "BillingCreate",
+    "BillingUpdate",
+    "BillingPatch",
+    "BillingResponse",
+    "PaymentStatus",
+    "PaymentMode",
+    "RevenueReportResponse",
+    "DoctorRevenueItem",
+    "DailyRevenueItem",
     "DoctorPatientAssignmentResponse",
     "MessageResponse",
     "ErrorResponse",

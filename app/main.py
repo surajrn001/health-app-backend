@@ -14,13 +14,15 @@ from app.auth.jwt import hash_password
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.limiter import limiter
-from app.models import User, UserRole, Doctor, Patient, DoctorPatient, Appointment
+from app.models import User, UserRole, Doctor, Patient, DoctorPatient, Appointment, Billing
 from app.routes import (
     api_v1_router,
     auth_router,
     doctors_router,
     patients_router,
     appointments_router,
+    billings_router,
+    reports_router,
 )
 
 logging.basicConfig(
@@ -73,6 +75,14 @@ openapi_tags = [
     {
         "name": "Appointments",
         "description": "Appointment scheduling, status lifecycle (scheduled, completed, cancelled), and overlap conflict prevention.",
+    },
+    {
+        "name": "Billings",
+        "description": "Billing entity lifecycle, payment tracking, invoices, and doctor/patient financial management.",
+    },
+    {
+        "name": "Reports",
+        "description": "Financial reports, aggregated revenue calculations per doctor and per day.",
     },
     {
         "name": "System",
@@ -249,6 +259,8 @@ app.include_router(auth_router, include_in_schema=False)
 app.include_router(doctors_router, include_in_schema=False)
 app.include_router(patients_router, include_in_schema=False)
 app.include_router(appointments_router, include_in_schema=False)
+app.include_router(billings_router, include_in_schema=False)
+app.include_router(reports_router, include_in_schema=False)
 
 
 @app.get("/", tags=["System"])

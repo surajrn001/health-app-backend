@@ -16,6 +16,7 @@ from app.models.doctor import Doctor
 from app.models.patient import Patient
 from app.models.doctor_patient import DoctorPatient
 from app.models.appointment import Appointment, AppointmentStatus
+from app.models.billing import Billing, PaymentStatus, PaymentMode
 from app.auth.jwt import hash_password
 
 
@@ -128,9 +129,51 @@ def seed():
             updated_by=admin.email,
         )
         db.add_all([appt1, appt2, appt3])
+        db.flush()
+
+        bill1 = Billing(
+            patient_id=p1.id,
+            doctor_id=doc1.id,
+            appointment_id=appt1.id,
+            consultation_fee=150.0,
+            additional_charges=25.0,
+            total_amount=175.0,
+            payment_status=PaymentStatus.PAID,
+            payment_mode=PaymentMode.CARD,
+            is_active=True,
+            created_by=admin.email,
+            updated_by=admin.email,
+        )
+        bill2 = Billing(
+            patient_id=p2.id,
+            doctor_id=doc1.id,
+            appointment_id=None,
+            consultation_fee=200.0,
+            additional_charges=0.0,
+            total_amount=200.0,
+            payment_status=PaymentStatus.PENDING,
+            payment_mode=PaymentMode.CASH,
+            is_active=True,
+            created_by=user_doc1.email,
+            updated_by=user_doc1.email,
+        )
+        bill3 = Billing(
+            patient_id=p3.id,
+            doctor_id=doc2.id,
+            appointment_id=appt3.id,
+            consultation_fee=300.0,
+            additional_charges=50.0,
+            total_amount=350.0,
+            payment_status=PaymentStatus.PAID,
+            payment_mode=PaymentMode.UPI,
+            is_active=True,
+            created_by=user_doc2.email,
+            updated_by=user_doc2.email,
+        )
+        db.add_all([bill1, bill2, bill3])
         db.commit()
 
-        print("Seeding completed successfully with doctors, patients, and sample appointments.")
+        print("Seeding completed successfully with doctors, patients, appointments, and billings.")
 
     except Exception as e:
         db.rollback()

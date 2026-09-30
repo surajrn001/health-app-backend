@@ -37,6 +37,7 @@ class Appointment(Base, AuditableMixin):
 
     doctor = relationship("Doctor", back_populates="appointments", lazy="joined")
     patient = relationship("Patient", back_populates="appointments", lazy="joined")
+    billing = relationship("Billing", back_populates="appointment", uselist=False, lazy="selectin")
 
     __table_args__ = (
         Index("ix_appointment_doctor_date", "doctor_id", "appointment_date"),

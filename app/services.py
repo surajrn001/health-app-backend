@@ -8,13 +8,20 @@ from app.models.patient import Patient
 from app.models.user import User
 from app.models.doctor_patient import DoctorPatient
 from app.models.appointment import Appointment, AppointmentStatus
+from app.models.billing import Billing, PaymentStatus, PaymentMode
 from app.schemas.doctor import DoctorCreate, DoctorUpdate
 from app.schemas.patient import PatientCreate, PatientUpdate
 from app.schemas.appointment import AppointmentCreate, AppointmentUpdate
+from app.schemas.billing import (
+    BillingCreate,
+    BillingUpdate,
+    RevenueReportResponse,
+)
 import app.crud.crud_doctor as crud_doctor
 import app.crud.crud_patient as crud_patient
 import app.crud.crud_assignment as crud_assignment
 import app.crud.crud_appointment as crud_appointment
+import app.crud.crud_billing as crud_billing
 import app.crud.crud_user as crud_user
 
 
@@ -242,3 +249,88 @@ class UserService:
     @staticmethod
     def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
         return crud_user.get_user_by_id(db, user_id)
+
+
+class BillingService:
+    @staticmethod
+    def get_billing(db: Session, billing_id: int) -> Optional[Billing]:
+        return crud_billing.get_billing(db, billing_id)
+
+    @staticmethod
+    def get_billings(
+        db: Session,
+        skip: int = 0,
+        limit: int = 20,
+        doctor_id: Optional[int] = None,
+        patient_id: Optional[int] = None,
+        appointment_id: Optional[int] = None,
+        payment_status: Optional[PaymentStatus] = None,
+        payment_mode: Optional[PaymentMode] = None,
+        from_date: Optional[datetime] = None,
+        to_date: Optional[datetime] = None,
+        is_active: Optional[bool] = None,
+    ) -> Tuple[List[Billing], int]:
+        return crud_billing.get_billings(
+            db,
+            skip=skip,
+            limit=limit,
+            doctor_id=doctor_id,
+            patient_id=patient_id,
+            appointment_id=appointment_id,
+            payment_status=payment_status,
+            payment_mode=payment_mode,
+            from_date=from_date,
+            to_date=to_date,
+            is_active=is_active,
+        )
+
+    @staticmethod
+    def create_billing(
+        db: Session,
+        billing_in: BillingCreate,
+        resolved_doctor_id: int,
+        created_by: Optional[str] = None,
+    ) -> Billing:
+        return crud_billing.create_billing(
+            db,
+            billing_in,
+            resolved_doctor_id=resolved_doctor_id,
+            created_by=created_by,
+        )
+
+    @staticmethod
+    def update_billing(
+        db: Session,
+        billing: Billing,
+        billing_in: BillingUpdate,
+        updated_by: Optional[str] = None,
+    ) -> Billing:
+        return crud_billing.update_billing(
+            db,
+            billing,
+            billing_in,
+            updated_by=updated_by,
+        )
+
+    @staticmethod
+    def soft_delete_billing(
+        db: Session,
+        billing: Billing,
+        updated_by: Optional[str] = None,
+    ) -> Billing:
+        return crud_billing.soft_delete_billing(db, billing, updated_by=updated_by)
+
+    @staticmethod
+    def get_revenue_report(
+        db: Session,
+        doctor_id: Optional[int] = None,
+        from_date: Optional[datetime] = None,
+        to_date: Optional[datetime] = None,
+    ) -> RevenueReportResponse:
+        return crud_billing.get_revenue_report(
+            db,
+            doctor_id=doctor_id,
+            from_date=from_date,
+            to_date=to_date,
+        )
+

@@ -19,11 +19,13 @@ from app.schemas.doctor import (
     DoctorResponse,
     DoctorDetailResponse,
 )
+from app.models.billing import PaymentStatus
 from app.schemas.patient import PatientResponse
 from app.schemas.assignment import DoctorPatientAssignmentResponse
 from app.schemas.appointment import AppointmentResponse
+from app.schemas.billing import BillingResponse
 from app.schemas.common import PaginatedResponse, make_paginated_response
-from app.services import DoctorService, AssignmentService, AppointmentService
+from app.services import DoctorService, AssignmentService, AppointmentService, BillingService
 
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
@@ -308,3 +310,55 @@ def fetch_doctor_appointments(
         appointment_date=appointment_date,
     )
     return make_paginated_response(items=appointments, total=total, page=page, limit=actual_limit)
+
+
+@router.get("/{doctor_id}/billings", response_model=PaginatedResponse[BillingResponse])
+@limiter.limit(settings.RATE_LIMIT_DEFAULT)
+def fetch_doctor_billings(
+    request: Request,
+    doctor_id: int,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    page_size: Optional[int] = Query(None, ge=1, le=100, description="Alias for limit"),
+    payment_status: Optional[PaymentStatus] = Query(None, description="Filter by payment status"),
+    is_active: Optional[bool] = Query(True, description="Filter by active status"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Retrieve billing records for a specific doctor (Level 27 & 28).
+    - Admin: Can view any doctor's billings.
+    - Doctor: Can only view their own billings.
+    """
+    doctor = DoctorService.get_doctor(db, doctor_id)
+    if not doctor:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Doctor with id {doctor_id} not found",
+        )
+
+    if current_user.role == UserRole.DOCTOR:
+        user_doctor = get_doctor_profile(current_user, db)
+        if not user_doctor or user_doctor.id != doctor_id:
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail="Doctors can only view their own billing records",
+            )
+    elif current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=http_status.HTTP_403_FORBIDDEN,
+            detail="Access denied to doctor billing records",
+        )
+
+    actual_limit = page_size if page_size is not None else limit
+    skip = (page - 1) * actual_limit
+    billings, total = BillingService.get_billings(
+        db,
+        skip=skip,
+        limit=actual_limit,
+        doctor_id=doctor_id,
+        payment_status=payment_status,
+        is_active=is_active,
+    )
+    return make_paginated_response(items=billings, total=total, page=page, limit=actual_limit)
+
